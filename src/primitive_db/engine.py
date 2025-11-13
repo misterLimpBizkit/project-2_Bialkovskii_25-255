@@ -1,7 +1,8 @@
 import prompt
-
-
 def welcome():
+    '''
+    Выводит приветствие и справку
+    '''
     print("Добро пожаловать в DB-проект!")
     print("Доступные команды: 'help', 'exit'")
     while True:
