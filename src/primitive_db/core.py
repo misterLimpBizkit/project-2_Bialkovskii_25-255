@@ -22,7 +22,6 @@ def create_table(metadata, table_name, *columns):
 
         allowed_data_types = ['int', 'str', 'bool']
 
-        processed_columns = ['ID:int']
         for column in columns:
             if not isinstance(column, str):
                 print('Недопустимый формат колонок.')
@@ -43,6 +42,11 @@ def create_table(metadata, table_name, *columns):
                 print('Недопустимый тип данных.')
                 return None
             
+            if 'ID:int' not in columns:
+                processed_columns = ['ID:int']
+            else:
+                processed_columns = []
+                
             processed_columns.append(f'{column_name.strip()}:{data_type.lower().strip()}')
         
         metadata[table_name] = {'columns': processed_columns}
@@ -68,4 +72,4 @@ def drop_table(metadata, table_name):
         return metadata
     else:
         print('Такой таблицы не существует.')
-        
+

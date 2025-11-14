@@ -1,7 +1,7 @@
 import prompt
 import shlex
-from utils import load_metadata, save_metadata
-from core import create_table, drop_table
+from primitive_db.core import create_table, drop_table  
+from primitive_db.utils import load_metadata, save_metadata
 def run():
     '''
     Main function of the program. Cicle of interaction with the user.
@@ -55,11 +55,7 @@ def run():
                         else:
                             print(f"Таблица '{table_name}' не существует.")
                 case 'help':
-                    print('<command> create_table <имя_таблицы> \
-                          <столбец1:тип> <столбец2:тип> .. - создать таблицу')
-                    print('<command> drop_table <имя_таблицы> - удалить таблицу')
-                    print('<command> exit - выход из программы')
-                    print('<command> help - справочная информация')
+                    print_help()
                 case _:
                     print(f"Неизвестная команда {command}. Введите 'help'")
         except KeyboardInterrupt:
@@ -72,7 +68,18 @@ def run():
 
                 
 
-
+def print_help():
+    """Prints the help message for the current mode."""
+   
+    print("\n***Процесс работы с таблицей***")
+    print("Функции:")
+    print("<command> create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
+    print("<command> list_tables - показать список всех таблиц")
+    print("<command> drop_table <имя_таблицы> - удалить таблицу")
+    
+    print("\nОбщие команды:")
+    print("<command> exit - выход из программы")
+    print("<command> help - справочная информация\n")
 
             
             
