@@ -1,6 +1,6 @@
 import prompt
 import shlex
-from core import create_table, drop_table, insert, select
+from core import create_table, drop_table, insert, select, delete
 from utils import load_metadata, save_metadata, load_table_data, save_table_data
 def run():
     '''
@@ -10,8 +10,7 @@ def run():
     None.
     '''
     print("Добро пожаловать в DB-проект!")
-    print("Доступные команды: 'help', 'exit', 'create_table', 'drop_table', 'list_tables'")
-    root_json = "metadata.json"
+    print("Вызовите help для просмотра доступных команд.")
     metadata = load_metadata()
     while True:
         try:
@@ -85,13 +84,18 @@ def run():
 
 def print_help():
     """Prints the help message for the current mode."""
-   
-    print("\n***Процесс работы с таблицей***")
-    print("Функции:")
-    print("<command> create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
-    print("<command> list_tables - показать список всех таблиц")
-    print("<command> drop_table <имя_таблицы> - удалить таблицу")
-    
-    print("\nОбщие команды:")
-    print("<command> exit - выход из программы")
-    print("<command> help - справочная информация\n")
+
+    print("\n*** Доступные команды ***")
+    print("create_table <table> <col1:type> [col2:type ...] - создать таблицу")
+    print("list_tables - показать список таблиц")
+    print("drop_table <table> - удалить таблицу")
+    print("select from <table> [where <conditions>] - выбрать данные")
+    print("update <table> set <col=val> [where <conditions>] - обновить данные")
+    print("delete from <table> [where <conditions>] - удалить данные")
+    print("exit - выход")
+    print("help - эта справка")
+    print("\nПримеры:")
+    print("  create_table users name:str age:int")
+    print("  select from users where age = 25 and name = 'dasha'")
+    print("  update users set name = 'ivan' where age = 25")
+    print("  delete from users where id = 1")

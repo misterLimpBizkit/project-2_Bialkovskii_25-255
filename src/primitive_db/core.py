@@ -150,40 +150,159 @@ def select(table_data, where_clause=None):
         '''
     try:
         if not table_data:
+            print('Таблица пуста.')
             return None
         
-        if not where_clause:
+        if where_clause is None:
             return table_data
         
         if not isinstance(where_clause, dict) or len(where_clause) == 0:
             print("Ошибка: where_clause должен быть словарем")
             return None
         
-        column = list(where_clause.keys())[0]
-        value = list(where_clause.values())[0]
-
-        if column not in table_data[0]:
-            print(f'Ошибка: Колонка "{column}" не существует в таблице.')
-            print(f'Доступные колонки: {", ".join(table_data[0].keys())}')
-            return None
+        first_row = table_data[0]
+        for column in where_clause.keys():
+            if column not in first_row:
+                print(f'Ошибка: Колонка "{column}" не существует в таблице.')
+                print(f'Доступные колонки: {", ".join(first_row.keys())}')
+                return None
         
         filtered_data = []
         for row in table_data:
-                if row.get(column) == value:
+                if all(row.get(column) == value for column, value in where_clause.items()):
                     filtered_data.append(row)
 
         return filtered_data
 
     except IndexError:
         print("Ошибка: Пустой where_clause или проблемы с индексами")
-        return []
+        return None
     except AttributeError as e:
         print(f"Ошибка: Проблема с структурой данных - {e}")
-        return []
+        return None
     except KeyError as e:
         print(f"Ошибка: Проблема с ключами в данных - {e}")
-        return []
+        return None
     except Exception as e:
         print(f"Неожиданная ошибка в select: {e}")
-        return []
-              
+        return None
+
+def where_clause_check(table_data, where_clause):
+    '''
+        Check if the where clause is valid.
+
+        Args:
+                table_data (list): The list of rows in the table.
+                where_clause (dict): The where clause to filter rows.
+
+        Returns:
+                bool: True if the where clause is valid, False otherwise.
+    '''
+    if not where_clause:
+        print('Отсутствует where_clause.')
+        return False
+
+    if not isinstance(where_clause, dict):
+        print('where_clause должен быть словарем')
+        return False
+    
+    first_row = table_data[0]
+    for column in where_clause.keys():
+        if column not in first_row:
+            print(f'Ошибка: Колонка "{column}" не существует в таблице.')
+            print(f'Доступные колонки: {", ".join(first_row.keys())}')
+            return False
+        
+    return True
+
+def update(table_data, set_clause, where_clause):
+    '''
+        Update rows in a table based on a where clause.
+
+        Args:
+                table_data (list): The list of rows in the table.
+                set_clause (dict): The set clause to update rows.
+                where_clause (dict): The where clause to filter rows.
+
+        Returns:
+                list: Updated rows.
+    '''
+    if not table_data:
+        print('Таблица пуста.')
+        return None
+    
+    if not set_clause:
+        print('Отсутствует set_clause.')
+        return None
+    
+    if not where_clause_check(table_data, where_clause):
+        return None
+    
+    if not isinstance(set_clause, dict):
+        print("set_clause должны быть словарями")
+        return None
+    
+    try: 
+        first_row = table_data[0]
+        for column in set_clause.keys():
+            if column not in first_row:
+                print(f'Ошибка: Колонка "{column}" не существует в таблице.')
+                print(f'Доступные колонки: {", ".join(first_row.keys())}')
+                return None
+            
+        updated_count = 0
+        for row in table_data:
+            if all(row.get(key) == value for key, value in where_clause.items()):
+                for key, value in set_clause.items():
+                    row[key] = value
+                    updated_count += 1
+
+        if updated_count == 0:
+            print('Нет строк, удовлетворяющих условиям where_clause.')
+        else:
+            print(f'Обновлено {updated_count} строк.')
+
+        return table_data
+    
+    except Exception as e:
+        print(f'Ошибка при обновлении: {e}')
+        return None
+
+
+
+def delete(table_data, where_clause):
+    '''
+    Delete rows from a table based on a where clause.
+
+    Args:
+        table_data (list): The list of rows in the table.
+        where_clause (dict): The where clause to filter rows.
+
+    Returns:
+        list: Updated rows.
+    '''
+    if not table_data:
+        print('Таблица пуста.')
+        return None
+
+    if not where_clause_check(table_data, where_clause):
+        return None
+
+    try:
+        updated_count = 0
+        for row in table_data[:]:
+            if all(row.get(key) == value for key, value in where_clause.items()):
+                table_data.remove(row)
+                updated_count += 1
+
+        if updated_count == 0:
+            print('Нет строк, удовлетворяющих условиям where_clause.')
+        else:
+            print(f'Удалено {updated_count} строк.')
+
+        return table_data
+    
+    except Exception as e:
+        print(f'Ошибка при удалении: {e}')
+        return None
+    
