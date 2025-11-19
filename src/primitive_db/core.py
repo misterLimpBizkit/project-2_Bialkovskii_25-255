@@ -1,6 +1,20 @@
 import os
-from prettytable import PrettyTable
-from utils import (id_generator, create_record, validate_and_convert_types, save_table_data, load_metadata, load_table_data)
+
+from primitive_db.decorators import (
+    confirm_action,
+    create_cacher,
+    handle_db_errors,
+    log_time,
+)
+from primitive_db.utils import (
+    create_record,
+    id_generator,
+    load_table_data,
+    validate_and_convert_types,
+)
+
+
+@handle_db_errors
 def create_table(metadata, table_name, *columns):
     '''
     Create a new table in the metadata.
@@ -54,7 +68,8 @@ def create_table(metadata, table_name, *columns):
             return None
         
         if data_type not in allowed_data_types:
-            print(f'Ошибка: Недопустимый тип данных "{data_type}". Допустимы: int, str, bool')
+            print(f'Ошибка: Недопустимый тип данных "{data_type}".' 
+            'Допустимы: int, str, bool')
             return None
         
         existing_columns = [col.split(':')[0] for col in processed_columns]
@@ -66,10 +81,13 @@ def create_table(metadata, table_name, *columns):
     
     
     metadata[table_name] = {'columns': processed_columns}
-    print(f'Таблица "{table_name}" успешно создана со столбцами: {", ".join(processed_columns)}')
+    print(f'Таблица "{table_name}" успешно создана со столбцами:'
+           f'{", ".join(processed_columns)}')
     return metadata
 
 
+@handle_db_errors
+@confirm_action('удаление таблицы')
 def drop_table(metadata, table_name):
     '''
         Drop a table from the metadata file.
@@ -95,6 +113,8 @@ def drop_table(metadata, table_name):
         print('Такой таблицы не существует.')
         return None
 
+@handle_db_errors
+@log_time
 def insert(metadata, table_name, values):
     '''
         Insert a new row into a table.
@@ -125,7 +145,7 @@ def insert(metadata, table_name, values):
         return None
     
     checked_data = validate_and_convert_types(useful_table_columns, values)
-    if checked_data == None:
+    if checked_data is None:
         print('Типы данных столбцов и внесенной информации не совпадают')
         return None
     
@@ -136,6 +156,10 @@ def insert(metadata, table_name, values):
     print(f"Запись успешно добавлена в таблицу '{table_name}' с ID={new_id}")
     return table_data
 
+
+cacher = create_cacher()
+@handle_db_errors
+@log_time
 def select(table_data, where_clause=None):
     '''
         Select rows from a table based on a where clause.
@@ -147,44 +171,40 @@ def select(table_data, where_clause=None):
         Returns:
                 list: Filtered rows.
         '''
-    try:
-        if not table_data:
-            print('Таблица пуста.')
+    
+    if not table_data:
+        print('Таблица пуста.')
+        return None
+        
+    if where_clause is None:
+        return table_data
+        
+    if not isinstance(where_clause, dict) or len(where_clause) == 0:
+        print("Ошибка: where_clause должен быть словарем")
+        return None
+        
+    first_row = table_data[0]
+    for column in where_clause.keys():
+        if column not in first_row:
+            print(f'Ошибка: Колонка "{column}" не существует в таблице.')
+            print(f'Доступные колонки: {", ".join(first_row.keys())}')
             return None
         
-        if where_clause is None:
-            return table_data
-        
-        if not isinstance(where_clause, dict) or len(where_clause) == 0:
-            print("Ошибка: where_clause должен быть словарем")
-            return None
-        
-        first_row = table_data[0]
-        for column in where_clause.keys():
-            if column not in first_row:
-                print(f'Ошибка: Колонка "{column}" не существует в таблице.')
-                print(f'Доступные колонки: {", ".join(first_row.keys())}')
-                return None
-        
+    cache_key = f"select_{str(where_clause)}"
+
+    def execute_query(): 
+        '''
+        Function to execute the query and cache the result.
+        '''  
         filtered_data = []
         for row in table_data:
-                if all(row.get(column) == value for column, value in where_clause.items()):
+                if all(row.get(column) == value for column, 
+                       value in where_clause.items()):
                     filtered_data.append(row)
-
         return filtered_data
 
-    except IndexError:
-        print("Ошибка: Пустой where_clause или проблемы с индексами")
-        return None
-    except AttributeError as e:
-        print(f"Ошибка: Проблема с структурой данных - {e}")
-        return None
-    except KeyError as e:
-        print(f"Ошибка: Проблема с ключами в данных - {e}")
-        return None
-    except Exception as e:
-        print(f"Неожиданная ошибка в select: {e}")
-        return None
+    return cacher(cache_key, execute_query)
+
 
 def where_clause_check(table_data, where_clause):
     '''
@@ -214,6 +234,8 @@ def where_clause_check(table_data, where_clause):
         
     return True
 
+
+@handle_db_errors
 def update(table_data, set_clause, where_clause):
     '''
         Update rows in a table based on a where clause.
@@ -268,7 +290,8 @@ def update(table_data, set_clause, where_clause):
         return None
 
 
-
+@handle_db_errors
+@confirm_action('удаления строки')
 def delete(table_data, where_clause):
     '''
     Delete rows from a table based on a where clause.
