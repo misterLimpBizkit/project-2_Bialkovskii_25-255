@@ -6,7 +6,7 @@ from prettytable import PrettyTable
 from primitive_db.constants import DATA_DIR, DEFAULT_FILE_PATH
 
 
-def load_metadata(file_path=DEFAULT_FILE_PATH):
+def load_metadata(file_path=DEFAULT_FILE_PATH, create_if_missing=True):
     """
         Load metadata from a JSON file.
 
@@ -19,6 +19,15 @@ def load_metadata(file_path=DEFAULT_FILE_PATH):
     try:
         with open(file_path, "r") as file:
             return json.load(file)
+    except FileNotFoundError:
+        print(f"Файла {file_path} еще нет")
+        return {}
+    except json.JSONDecodeError:
+        print(f"Ошибка: некорректный JSON в '{file_path}'")
+        return {}
+    except PermissionError:
+        print(f"Нет прав на чтение файла: {file_path}")
+        return {}
     except FileNotFoundError:
         print(f"Ошибка, файл {file_path} не найден")
         return {}
